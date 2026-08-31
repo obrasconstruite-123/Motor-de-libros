@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: construite
+      POSTGRES_PASSWORD: construite
+      POSTGRES_DB: construite
+    volumes:
+      - construite_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U construite -d construite"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  app:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ""
+    environment:
+      DATABASE_URL: postgresql://construite:construite@db:5432/construite?schema=public
+      JWT_SECRET: local-only-change-me
+      JWT_EXPIRES_IN: 8h
+      PORT: 4000
+      CORS_ORIGINS: http://localhost:8080
+    ports:
+      - "8080:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  construite_pgdata:
